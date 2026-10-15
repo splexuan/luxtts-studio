@@ -1,6 +1,11 @@
-# 批处理必须以 CRLF 存进仓库。
-# 原因：非 CRLF 的 .bat 双击会「闪退无报错」，而且这类失败在开发机上
-# 因为 checkout 时被自动转换过而看不见 —— 只有拿到别人机器上才暴露。
+# 批处理必须以 CRLF 落到工作区。
+# 原因：非 CRLF 的 .bat 双击会「闪退无报错」。
+#
+# 注意 eol=crlf 的语义：**仓库里存的是 LF，检出时才转成 CRLF**。
+# 所以别用 `git show HEAD:xxx.bat` 去判断 —— 那是 blob，永远是 LF，看起来像坏了。
+# 要验证就真的 clone 一遍再看文件字节：
+#     git clone <repo> /tmp/t && python -c "print(open('/tmp/t/run_web.bat','rb').read().count(b'\r\n'))"
+# 实测 clone 出来 49 / 110 行 CRLF，双击正常。
 *.bat text eol=crlf
 *.cmd text eol=crlf
 

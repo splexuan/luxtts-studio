@@ -10,9 +10,8 @@
 # 便携运行时（Python 3.12 + 全部依赖）
 runtime/
 
-# 模型权重
+# 模型权重（含转写用的 sensevoice-small/，都在 checkpoints/ 里）
 checkpoints/
-whisper-base/
 
 # ---- 个人资产：绝不入库 ----
 # 音色库是录的真人声音，属于个人信息；

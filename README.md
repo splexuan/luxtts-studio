@@ -6,7 +6,7 @@
 - **48 kHz 清晰输出**（不是常见的 24 kHz）
 - **4 步出字**，GTX 1650上实测实时倍率约 **3.7×**
 - **参考音频 3~10 秒**即可建音色，建完缓存在本地
-- 纯本地推理，**不联网**（转写用随包Whisper，不调任何云 API）
+- 纯本地推理，**不联网**（转写用随包 SenseVoice，不调任何云 API）
 
 ---
 
@@ -63,11 +63,12 @@
 ```
 <项目目录>/
 ├─ runtime/        便携Python 3.12 + 全部依赖   ~9.0 GB
-├─ checkpoints/    模型权重 + 声码器            ~1.1 GB
+├─ checkpoints/    模型权重 + 声码器 + 转写模型  ~1.3 GB
 │  ├─ config.json
 │  ├─ model.pt  tokens.txt  text_encoder.onnx  fm_decoder.onnx
-│  └─ vocoder/  vocos.bin  config.yaml
-└─ whisper-base/   本地 Whisper（自动转写用）    ~282 MB
+│  ├─ vocoder/  vocos.bin  config.yaml
+│  └─ sensevoice-small/  model.int8.onnx  tokens.txt   (~229 MB，自动转写用)
+└─ （whisper-base/ 已移除：转写统一走 SenseVoice）
 ```
 
 摆好之后双击 **`setup.bat`** 逐项自检（它只检查、不会下载 11 GB 的东西——
@@ -78,7 +79,7 @@
 | `runtime/` | 完全跑不起来 |
 | `checkpoints/` | 完全跑不起来 |
 | `upstream/` | 完全跑不起来（**这个在仓库里**，2.3 M） |
-| `whisper-base/` | 能跑，建音色时必须手工填参考文本 |
+| `checkpoints/sensevoice-small/` | 能跑，建音色时必须手工填参考文本 |
 
 ###环境变量
 
@@ -89,7 +90,7 @@ LUXTTS_HOST / LUXTTS_PORT          监听地址，默认 127.0.0.1:7867
 LUXTTS_DEVICE                      auto | cuda | cuda:1 | cpu
 LUXTTS_THREADS                     CPU/ONNX 路径的线程数，0 = 自动
 LUXTTS_ASR=0                       关掉自动转写
-LUXTTS_ASR_ENGINE                  whisper | sensevoice
+LUXTTS_SENSEVOICE_DIR              SenseVoice 模型目录（默认 checkpoints/sensevoice-small）
 ```
 
 ---

@@ -145,6 +145,12 @@ num_steps / speed / return_smooth`），应当作为「合成设置」区放在�
 这里只是 **282 M 的 base**，收益没有那边大。所以这是一次「值得做但非必须」的优化 ——
 **可以放到 Task 5 单独做，失败就退回 Whisper，不影响主重构。**
 
+> **✅ 已落地（2026-10-15 下午）**：Whisper 已整体移除（`whisper-base/` 282 M 已删），
+> SenseVoice Small 成为唯一引擎（`checkpoints/sensevoice-small/`，229 M，从 OmniVoice 复制；
+> `sherpa-onnx==1.13.8` 与 OmniVoice 同版本）。实测：装载 1.44 s / 转写 0.26 s，
+> 输出**简体 + 标点**；端到端 verify-flow ALL PASS。
+> 原以为要保留 Whisper 做退路 —— 实际不必：SenseVoice 一次成功，无任何回退需要。
+
 ### C. 先建 git 基线（强烈建议）
 
 LuxTTS **不是 git 仓库**、没有任何测试。重构前不建基线，改坏了无法回退 ——

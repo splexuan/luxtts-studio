@@ -64,8 +64,8 @@ def main() -> int:
     print("    device_info    :", core.device_info(), flush=True)
 
     # ---- 编码参考音频：把「冷启动 / 热态 / 给了文本」三种情况分开测 ----
-    # 不分清楚会得出错误结论：第一次 encode 里含着 Whisper 权重的首次装载
-    # （transformers 的 pipeline 是懒加载的），把它算进「转写耗时」会高估好几倍。
+    # 不分清楚会得出错误结论：第一次 encode 里含着 SenseVoice（sherpa-onnx）
+    # 的首次初始化，把它算进「转写耗时」会高估好几倍。
     if args.no_asr:
         print("[2] 按 --no-asr 跳过自动转写", flush=True)
         prompt = core.encode_ref(ref, ref_text="手工填写的参考文本")
@@ -82,7 +82,7 @@ def main() -> int:
         core.encode_ref(ref, ref_text=prompt["ref_text"])
         given = time.perf_counter() - t
 
-        print(f"[2] encode_ref 冷启动（含 Whisper 首次装载）{cold:7.3f} s", flush=True)
+        print(f"[2] encode_ref 冷启动（含 SenseVoice 首次初始化）{cold:7.3f} s", flush=True)
         print(f"    encode_ref 热态（这才是转写本身的耗时）{warm:7.3f} s", flush=True)
         print(f"    给了 ref_text 再编码                   {given:7.3f} s"
               f"   ← 音色库缓存省掉的就是前两项", flush=True)

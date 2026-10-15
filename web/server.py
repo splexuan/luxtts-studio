@@ -8,7 +8,7 @@
 1. **启动时不加载模型。** 加载要 4~5 秒，而界面验证脚本需要反复起停服务。
    `/api/bootstrap` 只报「有没有加载」，第一次真正合成时才装载。
 2. **合成走「提交 + 轮询」而不是同步接口。** 冷启动第一次合成要十几秒
-   （模型装载 + Whisper 权重装载 + CUDA 预热），同步请求会让界面卡住且没法显示进度。
+   （模型装载 + CUDA 预热），同步请求会让界面卡住且没法显示进度。
 
 端口只有一处来源：`app/config.py` 的 `HOST` / `PORT`。
 """
@@ -182,7 +182,6 @@ def bootstrap() -> dict:
             "engine": config.ASR_ENGINE,
             "enabled": config.ASR_ENABLED,
             "reason": core.device_info()["asr_reason"],
-            "hint": __import__("app.asr", fromlist=["x"]).shift_to_simplified_hint(),
         },
         # 这里只给**个数**，不是列表 —— 列表走 /api/voices。
         # 刻意不叫 "voices"：那个键在 /api/voices 里是列表，同名不同义最容易踩。
@@ -292,7 +291,10 @@ async def api_transcribe(file: UploadFile = File(...), duration: float | None = 
         dur = _probe_audio(src)
         from app import asr as asr_mod
 
-        transcriber = asr_mod.get_transcriber(core.load_model()["device"])
+        # 注意这里**不 load_model()**：SenseVoice 走 sherpa-onnx 的纯 CPU 路径，
+        # 和 TTS 模型互不相干。转写不该强迫用户付 5 秒的模型装载 ——
+        # 特别是「先转写看看内容」这种只想试一下的场景。
+        transcriber = asr_mod.get_transcriber()
         if transcriber is None:
             raise HTTPException(400, f"转写引擎不可用：{asr_mod.unavailable_reason()}")
 
@@ -306,7 +308,6 @@ async def api_transcribe(file: UploadFile = File(...), duration: float | None = 
             "duration": dur,
             "engine": config.ASR_ENGINE,
             "token": src.name,          # 后面保存音色就复用这个已上传的文件
-            "hint": asr_mod.shift_to_simplified_hint(),
         }
     except HTTPException:
         raise

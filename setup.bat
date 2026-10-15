@@ -10,11 +10,11 @@ rem       produce bogus "'xxx' is not recognized as an internal command".
 rem    3. Never switch the console code page in this file.
 rem    Write it with: p.write_bytes(text.replace("\n","\r\n").encode("gbk"))
 rem
-rem  What this does NOT do: download the 7.7 G portable runtime, the model
-rem  checkpoints, or the Whisper weights. Those are manual steps, listed by
-rem  this script with the exact folder to drop them into. A setup script
-rem  that silently fetches 11 GB is worse than one that tells you what is
-rem  missing.
+rem  What this does NOT do: download the 9 G portable runtime, the model
+rem  checkpoints (TTS weights + the sensevoice-small transcriber). Those are
+rem  manual steps, listed by this script with the exact folder to drop them
+rem  into. A setup script that silently fetches 11 GB is worse than one that
+rem  tells you what is missing.
 rem ======================================================================
 setlocal
 cd /d "%~dp0"
@@ -68,16 +68,16 @@ goto ask_missing
 :have_ckpt
 echo [ok] checkpoints\config.json
 
-rem ---- 5. whisper (needed for transcription when building a voice) ---
-if exist "%~dp0whisper-base" goto have_whisper
-echo [WARN] whisper-base\ not found.
+rem ---- 5. sensevoice (needed for transcription when building a voice) ---
+if exist "%~dp0checkpoints\sensevoice-small\model.int8.onnx" goto have_asr
+echo [WARN] checkpoints\sensevoice-small\ not found.
 echo   Without it the UI cannot transcribe a reference recording, so you will
 echo   have to type the reference text by hand when creating a voice.
-echo   Copy the "whisper-base" folder into:
-echo     %~dp0
+echo   Copy the "sensevoice-small" folder (229 M, sherpa-onnx int8) into:
+echo     %~dp0checkpoints\
 goto ask_missing
-:have_whisper
-echo [ok] whisper-base\
+:have_asr
+echo [ok] checkpoints\sensevoice-small\
 
 echo.
 echo [MISSING] nothing else is required. You can start with run_web.bat.

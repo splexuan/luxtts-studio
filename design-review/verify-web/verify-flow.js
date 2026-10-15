@@ -3,7 +3,8 @@
 // 跑法：node verify-flow.js <outDir> <port> <参考音频绝对路径>
 //
 // 这一版会**真的跑模型**：上传参考音频 → 试转写 → 保存音色 → 合成 → 看记录 → 删除音色。
-// 冷启动要十几秒（模型 + Whisper + CUDA 预热），所以每个等待都给了宽裕的超时。
+// 冷启动要十几秒（模型装载 + CUDA 预热；转写用 SenseVoice，冷启只要几秒），
+// 所以每个等待都给了宽裕的超时。
 //
 // 收尾一定把测试音色删掉 —— 参考音频取自别人（OmniVoice 的音色库），
 // 留着就是个不请自来的克隆。
@@ -80,7 +81,7 @@ async function until(page, fn, msg, timeout = 180000, ...args) {
     return note;
   });
 
-  await step("试转写（真跑 Whisper）", async () => {
+  await step("试转写（真跑 SenseVoice）", async () => {
     await page.click("#n-asr");
     await until(page, () => {
       const b = document.querySelector("#n-badge");

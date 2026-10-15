@@ -12,8 +12,7 @@
 
 环境变量可以临时覆盖（都在下面各行的 `os.environ.get` 里）：
     LUXTTS_HOST / LUXTTS_PORT / LUXTTS_DEVICE / LUXTTS_THREADS
-    LUXTTS_ASR=0（关掉自动转写）/ LUXTTS_ASR_ENGINE=sensevoice
-    LUXTTS_ASR_THREADS / LUXTTS_SENSEVOICE_DIR
+    LUXTTS_ASR=0（关掉自动转写）/ LUXTTS_ASR_THREADS / LUXTTS_SENSEVOICE_DIR
 """
 
 from __future__ import annotations
@@ -42,9 +41,8 @@ def _env_int(name: str, default: int) -> int:
 ROOT = Path(__file__).resolve().parent.parent
 
 UPSTREAM = ROOT / "upstream"           # 上游源码：zipvoice/ linacodec/（保持原样，见 core.py 文件头）
-CHECKPOINTS = ROOT / "checkpoints"     # 模型 + 声码器
+CHECKPOINTS = ROOT / "checkpoints"     # 模型 + 声码器 + 转写模型
 VOCODER_DIR = CHECKPOINTS / "vocoder"
-WHISPER_DIR = ROOT / "whisper-base"    # 本地 Whisper（转写退路用，不联网）
 VOICES_DIR = ROOT / "voices"           # 音色库（个人数据）
 OUTPUTS_DIR = ROOT / "outputs"         # 生成结果 + history.json
 HISTORY_FILE = OUTPUTS_DIR / "history.json"
@@ -65,7 +63,11 @@ NUM_THREADS = _env_int("LUXTTS_THREADS", 0)           # 0 = 自动（只在 CPU/
 # 参考音频转写
 # --------------------------------------------------------------------------
 ASR_ENABLED = _env_bool("LUXTTS_ASR", True)
-ASR_ENGINE = os.environ.get("LUXTTS_ASR_ENGINE", "whisper").strip().lower()  # whisper | sensevoice
+# 引擎只有一个：SenseVoice Small（sherpa-onnx int8，纯 CPU，229 MB）。
+# 原来的 whisper-base 已整体移除（2026-10-15）：转中文出繁体、transformers
+# 冷装载要 9.69 s，都远不如 SenseVoice（秒级冷启 + 简体 + 与 OmniVoice 同引擎）。
+# 这里保留常量而不是环境变量 —— 只有一个值可设的开关是假控件。
+ASR_ENGINE = "sensevoice"
 ASR_THREADS = _env_int("LUXTTS_ASR_THREADS", 0)       # 0 = 自动
 SENSEVOICE_DIR = Path(
     os.environ.get("LUXTTS_SENSEVOICE_DIR") or (CHECKPOINTS / "sensevoice-small")

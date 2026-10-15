@@ -72,7 +72,7 @@ def main() -> int:
     print(f"参考音频：{REF}\n")
     blob = REF.read_bytes()
 
-    print("[1] POST /api/transcribe（冷：要装 Whisper 权重，最容易崩的一步）")
+    print("[1] POST /api/transcribe（冷：要初始化 SenseVoice）")
     t0 = time.perf_counter()
     try:
         tr = post_multipart("/api/transcribe", "file", REF.name, blob)

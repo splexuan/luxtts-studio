@@ -181,6 +181,42 @@ def _require_text(ref_text: str | None, reason: str | None) -> str:
     )
 
 
+def _speech_rate(text: str, seconds: float) -> float:
+    """参考文本的「字/秒」。中文字 + 英文单词都算一个字。"""
+    cjk = sum(1 for c in text if "一" <= c <= "鿿")
+    words = sum(1 for w in text.split() if w)
+    return (cjk + words) / max(0.1, seconds)
+
+
+def _check_text_matches_audio(text: str, frames: int, sample_rate: int = config.SR_24K) -> None:
+    """参考文本必须和特征那一段音频**对应**，否则语速会错得离谱。
+
+    上游的目标时长是这么推的（`zipvoice/models/zipvoice.py`）::
+
+        目标帧数 = 参考帧数 / 参考token数 * 目标token数 / speed
+
+    注意分子是**参考帧数**（只含 `ref_duration` 那一段），分母却是**整段文本的
+    token 数**。两者一旦不对应，比例就整体偏移 —— 文本越长、语速越快，且**没有任何报错**。
+
+    实测：20 秒音频、界面按默认 `ref_duration=5` 建缓存，但转写时没截断、
+    把整段 112 字都存成了参考文本 → 同一句话输出 **26.7 字/秒**（正常约 6）。
+    因为 112/28 ≈ 4，时长正好被压成四分之一。
+
+    所以这里设一道护栏：按「文本字数 ÷ 特征时长」算出隐含语速，明显超出人类
+    说话范围就报错，**宁可建音色失败，也不要悄悄生成一个语速错乱的音色**。
+    """
+    # 特征是mel 帧，固定 25 帧/秒（VocosFbank 的 hop）—— **与采样率无关**，
+    # 之前写成 frames / (sample_rate/25) 会把 5 秒算成 0.13 秒，满盘误报。
+    seconds = frames / 25.0
+    rate = _speech_rate(text, seconds)
+    if rate > 14.0 or rate < 0.8:
+        raise RuntimeError(
+            f"参考文本与参考音频对不上：{rate:.1f} 字/秒（正常说话约 3~8 字/秒）。"
+            f"通常是因为转写用了整段音频，而 prompt 只取了前 {seconds:.1f} 秒 —— "
+            f"转写与建缓存必须用同一段音频。请在新建音色时先裁剪波形再转写。"
+        )
+
+
 @torch.inference_mode()
 def encode_ref(
     audio: str | Path | np.ndarray,
@@ -255,6 +291,9 @@ def encode_ref(
     prompt_features_lens = torch.tensor([prompt_features.size(1)], device=device)
     prompt_tokens = tokenizer.texts_to_token_ids([text])
 
+    # 文本必须与特征那一段对应，否则语速会整体偏移（见 _check_text_matches_audio）
+    _check_text_matches_audio(text, prompt_features.size(1), config.SR_24K)
+
     return {
         "prompt_tokens": prompt_tokens,
         "prompt_features_lens": prompt_features_lens,
@@ -262,6 +301,7 @@ def encode_ref(
         "prompt_rms": prompt_rms,
         "ref_text": text,
         "ref_seconds": ref_seconds,
+        "ref_rate": round(_speech_rate(text, ref_seconds), 2),
     }
 
 
