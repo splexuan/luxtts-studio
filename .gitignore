@@ -1,0 +1,63 @@
+# ---- 本项目的核心结论：仓库只装「源文件」，不装「运行环境」----
+#  runtime/(9.0G) / checkpoints/(1.1G) / whisper-base/(282M)
+#  都是**外部资产**，clone 到新机器后要按 README 里的说明手动摆进去。
+#  把它们提交进去，仓库会立刻膨胀到 10G 以上，clone 一次要半小时。
+#
+#  upstream/ 只有 2.3M，而且 app/core.py 直接 `from zipvoice... import`，
+#  少了它 clone 出来根本跑不起来 —— 所以它**要入库**。它是对上游
+#  LuxTTS 的原样快照，保持零diff，便于随时对齐上游新版本。
+
+# 便携运行时（Python 3.12 + 全部依赖）
+runtime/
+
+# 模型权重
+checkpoints/
+whisper-base/
+
+# ---- 个人资产：绝不入库 ----
+# 音色库是录的真人声音，属于个人信息；
+# outputs/ 是生成产物，可以随时重新生成。
+voices/
+outputs/
+
+# ---- 开发期临时文件 ----
+# 残留的服务日志、启动快照、验证截图
+_boot.json
+_srv.log
+*.log
+
+# 界面验证脚本的输出（截图落在 design-review/verify-web/shots/）
+design-review/verify-web/shots/
+design-review/verify-web/*.png
+# 根目录散落的截图：早期把输出目录参数传错过，产物掉在这里。属垃圾，挡住。
+/*.png
+/_srv.log
+/_flow.log
+
+# 上传临时区（保存音色时会解码转存进 voices/，之后就没用了）
+web/_uploads/
+web/_uploads/**
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ---- Node（只有验证脚本用 puppeteer-core，不入库）----
+node_modules/
+package-lock.json
+package.json
+
+# ---- 编辑器与系统 ----
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ---- WorkBuddy ----
+.workbuddy/

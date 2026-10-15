@@ -1,0 +1,24 @@
+# 批处理必须以 CRLF 存进仓库。
+# 原因：非 CRLF 的 .bat 双击会「闪退无报错」，而且这类失败在开发机上
+# 因为 checkout 时被自动转换过而看不见 —— 只有拿到别人机器上才暴露。
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 源码与文本统一 LF，避免不同机器上出现无意义的整文件 diff。
+*.py   text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.html text eol=lf
+*.css  text eol=lf
+
+# 二进制：不做任何转换。
+*.wav binary
+*.onnx binary
+*.pt   binary
+*.pth  binary
+*.bin  binary
+*.png  binary
+*.jpg  binary
